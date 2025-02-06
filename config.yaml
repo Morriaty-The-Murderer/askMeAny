@@ -1,0 +1,191 @@
+# NL2SQL Configuration
+
+# Provider Selection
+default_provider: "openai"  # openai, anthropic, google
+fallback_providers: ["anthropic", "google"]
+
+# OpenAI Configuration
+openai:
+  enabled: true
+  api_key: "YOUR_OPENAI_KEY_HERE"
+  api_base: "https://api.openai.com/v1"
+  api_version: "2023-05-15"
+  models:
+    default: "gpt-4"
+    alternatives: ["gpt-4-turbo", "gpt-3.5-turbo"]
+    version_map:
+      "gpt-4": "0613"
+      "gpt-4-turbo": "0125"
+      "gpt-3.5-turbo": "0125"
+    capabilities: ["sql", "schema_understanding", "complex_queries"]
+  parameters:
+    max_tokens: 2048
+    temperature: 0.7
+    top_p: 1.0
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    timeout: 30
+  retry_strategy:
+    max_retries: 3
+    initial_delay: 1.0
+    max_delay: 60.0
+    backoff_factor: 2.0
+    retryable_errors: ["timeout", "rate_limit", "server_error"]
+
+# Anthropic Configuration
+anthropic:
+  enabled: true
+  api_key: "YOUR_ANTHROPIC_KEY_HERE"
+  api_base: "https://api.anthropic.com/v1"
+  api_version: "2023-12-01"
+  models:
+    default: "claude-2"
+    alternatives: ["claude-instant", "claude-2.1"]
+    version_map:
+      "claude-2": "2023-12-01"
+      "claude-2.1": "2024-01-01"
+      "claude-instant": "2023-12-01"
+    capabilities: ["sql", "schema_understanding", "explanations"]
+  parameters:
+    max_tokens: 2048
+    temperature: 0.7
+    top_p: 1.0
+    timeout: 30
+  retry_strategy:
+    max_retries: 3
+    initial_delay: 1.0
+    max_delay: 60.0
+    backoff_factor: 2.0
+    retryable_errors: ["timeout", "rate_limit", "server_error", "overloaded"]
+
+# Google Configuration
+google:
+  enabled: true
+  api_key: "YOUR_GOOGLE_KEY_HERE"
+  api_base: "https://generativelanguage.googleapis.com/v1"
+  api_version: "2024-01"
+  models:
+    default: "gemini-pro"
+    alternatives: ["gemini-pro-vision", "text-bison"]
+    version_map:
+      "gemini-pro": "001"
+      "gemini-pro-vision": "001"
+      "text-bison": "001"
+    capabilities: ["sql", "multilingual", "code_generation"]
+  parameters:
+    max_tokens: 2048
+    temperature: 0.7
+    top_p: 1.0
+    timeout: 30
+  retry_strategy:
+    max_retries: 3
+    initial_delay: 1.0
+    max_delay: 60.0
+    backoff_factor: 2.0
+    retryable_errors: ["timeout", "quota_exceeded", "internal"]
+
+# Provider-specific prompts
+prompts:
+  openai:
+    base: "Given the following database schema, generate a SQL query for this natural language request.\nSCHEMA: {schema}\nQUERY: {query}\nGenerate only the SQL query without explanations."
+    few_shot: |
+      Convert these natural language queries to SQL:
+
+      Schema: users(id, name, email, created_at)
+      Query: Show me all users who joined last month
+      SQL: SELECT * FROM users WHERE EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE - INTERVAL '1 month');
+
+      Schema: {schema}
+      Query: {query}
+      SQL:
+  
+  anthropic:
+    base: "You are a SQL expert. Please convert this natural language query to SQL using the provided database schema.\nSCHEMA: {schema}\nQUERY: {query}\nRespond with only the SQL query."
+    few_shot: |
+      Let me demonstrate SQL query generation with an example:
+
+      Schema: products(id, name, price), orders(id, product_id, quantity)
+      Query: Find the top 5 products by sales
+      SQL: SELECT p.name, COUNT(*) as sales FROM products p JOIN orders o ON p.id = o.product_id GROUP BY p.id ORDER BY sales DESC LIMIT 5;
+
+      Now for your query:
+      Schema: {schema}
+      Query: {query}
+      SQL:
+
+  google:
+    base: "Convert the following natural language request to a SQL query based on the given database schema.\nSCHEMA: {schema}\nQUERY: {query}\nOutput the SQL query only."
+    few_shot: |
+      I'll help you convert natural language to SQL queries. Here's an example:
+
+      Schema: employees(id, name, department, salary)
+      Query: Find average salary by department
+      SQL: SELECT department, AVG(salary) as avg_salary FROM employees GROUP BY department;
+
+      Now for your query:
+      Schema: {schema}
+      Query: {query}
+      SQL:
+
+# Schema format settings
+schema:
+  include_indexes: true
+  include_foreign_keys: true
+  max_sample_rows: 5
+
+# Cache settings
+cache:
+  enabled: true
+  ttl: 3600
+  max_size: 1000
+
+# Logging configuration
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "nl2sql.log"
+
+# Database connection defaults
+database:
+  pool_min: 1
+  pool_max: 10
+  pool_timeout: 30
+  connect_timeout: 10
+  retry_attempts: 3
+
+# Request queue settings
+queue:
+  max_size: 1000
+  workers: 5
+  request_timeout: 30
+  max_retries: 3
+
+# Output formatting
+output:
+  pretty_print: true
+  max_rows: 100
+  truncate_strings: 50
+
+# Error handling
+errors:
+  max_retries: 3
+  retry_delay: 1
+  capture_stack_trace: true
+  detailed_errors: true
+  provider_errors:
+    openai:
+      rate_limit: "Rate limit exceeded for OpenAI API"
+      timeout: "OpenAI API request timed out"
+      server_error: "OpenAI API server error"
+    anthropic:
+      rate_limit: "Claude API rate limit reached"
+      timeout: "Claude API request timed out"
+      overloaded: "Claude API temporarily overloaded"
+    google:
+      quota_exceeded: "Gemini API quota exceeded"
+      timeout: "Gemini API request timed out"
+      internal: "Gemini API internal error"
+  error_response_format:
+    include_timestamp: true
+    include_request_id: true
+    include_model_info: true
