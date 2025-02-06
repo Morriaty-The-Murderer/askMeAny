@@ -1,0 +1,55 @@
+# Clacky - Development Tool Related
+.1024*
+!.1024
+.breakpoints
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook 
+.ipynb_checkpoints/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Project specific
+logs/
+data/
+models/
+output/
+*.log
+temp/
+cache/
