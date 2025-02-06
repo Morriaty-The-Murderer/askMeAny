@@ -4,19 +4,12 @@ This module provides utility functions for loading, validating and extracting me
 from data files used in the NL2SQL system.
 """
 
-import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
 
 import pandas as pd
 from pandas.errors import EmptyDataError
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 def load_csv_data(filepath: str) -> pd.DataFrame:
@@ -51,7 +44,7 @@ def load_csv_data(filepath: str) -> pd.DataFrame:
         return df
         
     except pd.errors.ParserError as e:
-        logger.error(f"Error parsing CSV file: {e}")
+        logger.exception("Error parsing CSV file")
         raise ValueError(f"Invalid CSV file format: {e}")
 
 
@@ -125,7 +118,7 @@ def get_column_metadata(df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
         return metadata
         
     except Exception as e:
-        logger.error(f"Error extracting column metadata: {e}")
+        logger.exception("Error extracting column metadata")
         raise ValueError(f"Failed to extract column metadata: {e}")
 
 
@@ -150,5 +143,5 @@ def normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
         return df
         
     except Exception as e:
-        logger.error(f"Error normalizing column names: {e}")
+        logger.exception("Error normalizing column names")
         raise ValueError(f"Failed to normalize column names: {e}")
