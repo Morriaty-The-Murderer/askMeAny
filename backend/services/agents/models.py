@@ -5,7 +5,6 @@ transformers) with common utilities for tokenization and text processing.
 """
 
 import json
-import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union, Tuple
 from dataclasses import dataclass
@@ -14,9 +13,10 @@ import openai
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 
-from src.components.error_handler import NL2SQLError, QueryGenerationError
+from backend.components.error_handler import NL2SQLError, QueryGenerationError
+from backend.logger_conf import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ModelError(NL2SQLError):
@@ -52,14 +52,14 @@ class TokenizerResult:
 class BaseModel(ABC):
     """Abstract base class for model implementations."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize base model.
         
         Args:
             config: Optional model configuration
         """
         self.config = config or {}
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
 
     @abstractmethod
     async def generate(

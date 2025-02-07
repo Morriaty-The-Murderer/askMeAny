@@ -4,17 +4,16 @@ This module implements the main processing pipeline that coordinates component
 interactions and handles the end-to-end flow of the NL2SQL system.
 """
 
-import logging
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
 
-from src.components.processors import (
+from backend.components.processors import (
     InputProcessor,
     SchemaManager,
     QueryValidator,
     QueryExecutor
 )
-from src.components.error_handler import (
+from backend.components.error_handler import (
     ErrorHandler,
     NL2SQLError,
     InputProcessingError,
@@ -23,10 +22,11 @@ from src.components.error_handler import (
     ValidationError,
     ExecutionError
 )
-from src.agents.agent import NL2SQLAgent
-from src.config import DATABASE, MODEL_CONFIG, LOGGING_CONFIG
+from backend.services.agents.agent import NL2SQLAgent
+from backend.config import DATABASE, MODEL_CONFIG
+from backend.logger_conf import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -64,8 +64,7 @@ class Pipeline:
         self.error_handler = ErrorHandler()
         
         # Setup logging
-        logging.config.dictConfig(LOGGING_CONFIG)
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
 
     def _process_input(self, text: str) -> Dict[str, Any]:
         """Process natural language input.

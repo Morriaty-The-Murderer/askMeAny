@@ -10,8 +10,6 @@ Example:
         $ python main.py
 """
 
-import logging
-import logging.config
 import os
 import sys
 from pathlib import Path
@@ -20,16 +18,16 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(project_root))
 
-from src.config import DATABASE, MODEL_CONFIG, LOGGING_CONFIG
-from src.pipeline import Pipeline
-from src.components.error_handler import NL2SQLError
+from backend.config import DATABASE, MODEL_CONFIG
+from backend.services.pipeline import Pipeline
+from backend.components.error_handler import NL2SQLError
+from backend.logger_conf import get_logger
 
 def setup_environment():
     """Initialize application environment and configurations."""
     # Set up logging
     try:
-        logging.config.dictConfig(LOGGING_CONFIG)
-        logger = logging.getLogger(__name__)
+        logger = get_logger(__name__)
         logger.info("Initializing application environment")
         
         # Initialize database connection
@@ -41,7 +39,7 @@ def setup_environment():
 
 def main():
     """Main execution function."""
-    logger = logging.getLogger(__name__)
+    logger = get_logger(__name__)
     
     try:
         # Initialize environment and pipeline
