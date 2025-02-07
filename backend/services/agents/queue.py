@@ -6,13 +6,13 @@ concurrent processing capabilities for the NL2SQL system.
 
 import asyncio
 import logging
-import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 class RequestStatus(Enum):
     PENDING = "pending"
@@ -21,10 +21,11 @@ class RequestStatus(Enum):
     FAILED = "failed"
     TIMEOUT = "timeout"
 
+
 @dataclass
 class Request:
     """Container for queue request data."""
-    
+
     id: str
     text: str
     schema: Dict[str, Any]
@@ -35,26 +36,30 @@ class Request:
     result: Optional[Any] = None
     error: Optional[str] = None
 
+
 class QueueError(Exception):
     """Base exception for queue-related errors."""
     pass
+
 
 class QueueFullError(QueueError):
     """Raised when queue is at capacity."""
     pass
 
+
 class RequestTimeoutError(QueueError):
     """Raised when request times out."""
     pass
 
+
 class RequestQueue:
     """Priority-based request queue with timeout handling."""
-    
+
     def __init__(
-        self,
-        max_size: int = 1000,
-        workers: int = 5,
-        default_timeout: int = 30
+            self,
+            max_size: int = 1000,
+            workers: int = 5,
+            default_timeout: int = 30
     ):
         """Initialize request queue.
         
@@ -66,12 +71,12 @@ class RequestQueue:
         self.max_size = max_size
         self.num_workers = workers
         self.default_timeout = default_timeout
-        
+
         self.queue = asyncio.PriorityQueue(maxsize=max_size)
         self.requests: Dict[str, Request] = {}
         self.workers: List[asyncio.Task] = []
         self.running = False
-        
+
         self.logger = logging.getLogger(__name__)
         self.stats = {
             "processed": 0,
@@ -80,12 +85,12 @@ class RequestQueue:
         }
 
     async def add_request(
-        self,
-        request_id: str,
-        text: str,
-        schema: Dict[str, Any],
-        priority: int = 0,
-        timeout: Optional[int] = None
+            self,
+            request_id: str,
+            text: str,
+            schema: Dict[str, Any],
+            priority: int = 0,
+            timeout: Optional[int] = None
     ) -> None:
         """Add request to queue.
         
@@ -101,7 +106,7 @@ class RequestQueue:
         """
         if len(self.requests) >= self.max_size:
             raise QueueFullError("Queue is at maximum capacity")
-            
+
         request = Request(
             id=request_id,
             text=text,
@@ -110,7 +115,7 @@ class RequestQueue:
             created_at=datetime.now(),
             timeout=timeout or self.default_timeout
         )
-        
+
         self.requests[request_id] = request
         await self.queue.put((priority, request))
         self.logger.debug(f"Added request {request_id} to queue")
@@ -134,21 +139,21 @@ class RequestQueue:
         """
         try:
             request.status = RequestStatus.PROCESSING
-            
+
             # Simulate processing time
             await asyncio.sleep(2)
-            
+
             if (datetime.now() - request.created_at).seconds > request.timeout:
                 request.status = RequestStatus.TIMEOUT
                 request.error = "Request timed out"
                 self.stats["timeouts"] += 1
                 return
-                
+
             # Process request here
             request.result = f"Processed {request.text}"
             request.status = RequestStatus.COMPLETED
             self.stats["processed"] += 1
-            
+
         except Exception as e:
             request.status = RequestStatus.FAILED
             request.error = str(e)
@@ -203,17 +208,17 @@ class RequestQueue:
         """
         now = datetime.now()
         to_remove = []
-        
+
         for request_id, request in self.requests.items():
             age = (now - request.created_at).seconds
             if age > max_age and request.status in (
-                RequestStatus.COMPLETED,
-                RequestStatus.FAILED,
-                RequestStatus.TIMEOUT
+                    RequestStatus.COMPLETED,
+                    RequestStatus.FAILED,
+                    RequestStatus.TIMEOUT
             ):
                 to_remove.append(request_id)
-                
+
         for request_id in to_remove:
             del self.requests[request_id]
-            
+
         self.logger.info(f"Cleaned up {len(to_remove)} old requests")

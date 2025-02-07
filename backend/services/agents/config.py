@@ -5,13 +5,11 @@ development and database-backed production environments. Includes connection poo
 and validation functionality.
 """
 
-import os
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
+
 import yaml
-import psycopg2
 from psycopg2 import pool
 from pydantic import BaseModel, Field
 
@@ -58,17 +56,21 @@ DEFAULT_CONFIG = {
     }
 }
 
+
 class ConfigError(Exception):
     """Base exception for configuration errors."""
     pass
+
 
 class ConfigValidationError(ConfigError):
     """Raised when configuration validation fails."""
     pass
 
+
 class ConfigLoadError(ConfigError):
     """Raised when loading configuration fails."""
     pass
+
 
 class RetryStrategy(BaseModel):
     """Retry configuration for API requests."""
@@ -78,12 +80,14 @@ class RetryStrategy(BaseModel):
     backoff_factor: float = 2.0
     retryable_errors: List[str] = Field(default_factory=lambda: ['timeout', 'rate_limit'])
 
+
 class ModelMapping(BaseModel):
     """Model mapping configuration."""
     default: str
     alternatives: List[str] = Field(default_factory=list)
     version_map: Dict[str, str] = Field(default_factory=dict)
     capabilities: List[str] = Field(default_factory=list)
+
 
 class ProviderConfig(BaseModel):
     """Provider-specific configuration schema."""
@@ -95,6 +99,7 @@ class ProviderConfig(BaseModel):
     parameters: Dict[str, Any]
     retry_strategy: RetryStrategy = Field(default_factory=RetryStrategy)
 
+
 class ConfigSchema(BaseModel):
     """Pydantic model for config validation."""
     default_provider: str = "openai"
@@ -103,15 +108,16 @@ class ConfigSchema(BaseModel):
     anthropic: Optional[ProviderConfig] = None
     google: Optional[ProviderConfig] = None
 
+
 class BaseConfig(ABC):
     """Abstract base class for configuration implementations."""
-    
+
     def __init__(self):
         """Initialize base config."""
         self.logger = logging.getLogger(__name__)
         self._config: Dict[str, Any] = {}
         self._pool: Optional[pool.SimpleConnectionPool] = None
-        
+
     def get_active_providers(self) -> List[str]:
         """Get list of enabled providers.
         
@@ -123,7 +129,7 @@ class BaseConfig(ABC):
             if self._config.get(provider, {}).get('enabled', False):
                 providers.append(provider)
         return providers
-        
+
     def get_provider_config(self, provider: str) -> ProviderConfig:
         """Get configuration for specific provider.
         
@@ -138,39 +144,39 @@ class BaseConfig(ABC):
         """
         if provider not in self._config:
             raise ConfigError(f"Provider '{provider}' not found in configuration")
-            
+
         if not self._config[provider].get('enabled', False):
             raise ConfigError(f"Provider '{provider}' is disabled")
-            
+
         return ProviderConfig(**self._config[provider])
 
     @abstractmethod
     def load(self) -> Dict[str, Any]:
         """Load configuration data."""
         raise NotImplementedError
-        
-def validate(self, config: Dict[str, Any]) -> None:
+
+    def validate(self, config: Dict[str, Any]) -> None:
         """Validate configuration against schema.
-        
+
         Args:
             config: Configuration dictionary to validate
-            
+
         Raises:
             ConfigValidationError: If validation fails
         """
         try:
             schema = ConfigSchema(**config)
-            
+
             # Validate provider configuration
             if not config.get(schema.default_provider, {}).get('enabled', False):
                 raise ConfigValidationError(f"Default provider '{schema.default_provider}' is not enabled")
-                
+
             for provider in schema.fallback_providers:
                 if provider not in config:
                     raise ConfigValidationError(f"Fallback provider '{provider}' not configured")
                 if not config[provider].get('enabled', False):
                     raise ConfigValidationError(f"Fallback provider '{provider}' is not enabled")
-                    
+
             # Validate API endpoints
             for provider in [schema.default_provider] + schema.fallback_providers:
                 if provider in config and config[provider].get('enabled'):
@@ -181,7 +187,7 @@ def validate(self, config: Dict[str, Any]) -> None:
 
     def get_pool(self) -> pool.SimpleConnectionPool:
         """Get or create database connection pool.
-        
+
         Returns:
             Database connection pool instance
         """
@@ -199,9 +205,10 @@ def validate(self, config: Dict[str, Any]) -> None:
             )
         return self._pool
 
+
 class YAMLConfig(BaseConfig):
     """YAML-based configuration for local development."""
-    
+
     def __init__(self, path: str):
         """Initialize YAML config.
         
@@ -229,9 +236,10 @@ class YAMLConfig(BaseConfig):
         except Exception as e:
             raise ConfigLoadError(f"Failed to load YAML config: {e}")
 
+
 class DBConfig(BaseConfig):
     """Database-backed configuration for production."""
-    
+
     def __init__(self, db_config: Dict[str, Any]):
         """Initialize database config.
         
@@ -260,6 +268,7 @@ class DBConfig(BaseConfig):
             return config
         except Exception as e:
             raise ConfigLoadError(f"Failed to load DB config: {e}")
+
 
 def create_config(config_type: str, **kwargs) -> BaseConfig:
     """Factory function to create config instance.

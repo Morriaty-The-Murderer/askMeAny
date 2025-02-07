@@ -2,7 +2,7 @@
 
 # Provider Selection
 default_provider: "openai"  # openai, anthropic, google
-fallback_providers: ["anthropic", "google"]
+fallback_providers: [ "anthropic", "google" ]
 
 # OpenAI Configuration
 openai:
@@ -12,12 +12,12 @@ openai:
   api_version: "2023-05-15"
   models:
     default: "gpt-4"
-    alternatives: ["gpt-4-turbo", "gpt-3.5-turbo"]
+    alternatives: [ "gpt-4-turbo", "gpt-3.5-turbo" ]
     version_map:
       "gpt-4": "0613"
       "gpt-4-turbo": "0125"
       "gpt-3.5-turbo": "0125"
-    capabilities: ["sql", "schema_understanding", "complex_queries"]
+    capabilities: [ "sql", "schema_understanding", "complex_queries" ]
   parameters:
     max_tokens: 2048
     temperature: 0.7
@@ -30,7 +30,7 @@ openai:
     initial_delay: 1.0
     max_delay: 60.0
     backoff_factor: 2.0
-    retryable_errors: ["timeout", "rate_limit", "server_error"]
+    retryable_errors: [ "timeout", "rate_limit", "server_error" ]
 
 # Anthropic Configuration
 anthropic:
@@ -40,12 +40,12 @@ anthropic:
   api_version: "2023-12-01"
   models:
     default: "claude-2"
-    alternatives: ["claude-instant", "claude-2.1"]
+    alternatives: [ "claude-instant", "claude-2.1" ]
     version_map:
       "claude-2": "2023-12-01"
       "claude-2.1": "2024-01-01"
       "claude-instant": "2023-12-01"
-    capabilities: ["sql", "schema_understanding", "explanations"]
+    capabilities: [ "sql", "schema_understanding", "explanations" ]
   parameters:
     max_tokens: 2048
     temperature: 0.7
@@ -56,7 +56,7 @@ anthropic:
     initial_delay: 1.0
     max_delay: 60.0
     backoff_factor: 2.0
-    retryable_errors: ["timeout", "rate_limit", "server_error", "overloaded"]
+    retryable_errors: [ "timeout", "rate_limit", "server_error", "overloaded" ]
 
 # Google Configuration
 google:
@@ -66,12 +66,12 @@ google:
   api_version: "2024-01"
   models:
     default: "gemini-pro"
-    alternatives: ["gemini-pro-vision", "text-bison"]
+    alternatives: [ "gemini-pro-vision", "text-bison" ]
     version_map:
       "gemini-pro": "001"
       "gemini-pro-vision": "001"
       "text-bison": "001"
-    capabilities: ["sql", "multilingual", "code_generation"]
+    capabilities: [ "sql", "multilingual", "code_generation" ]
   parameters:
     max_tokens: 2048
     temperature: 0.7
@@ -82,7 +82,7 @@ google:
     initial_delay: 1.0
     max_delay: 60.0
     backoff_factor: 2.0
-    retryable_errors: ["timeout", "quota_exceeded", "internal"]
+    retryable_errors: [ "timeout", "quota_exceeded", "internal" ]
 
 # Provider-specific prompts
 prompts:

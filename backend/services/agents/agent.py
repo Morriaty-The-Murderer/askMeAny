@@ -5,25 +5,20 @@ connection pooling, request queueing and async processing capabilities.
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from backend.services.agents.base import BaseAgent, GenerationResult, ValidationResult
-from backend.services.agents.models import (
-    BaseModel,
-    OpenAIModel,
-    TransformersModel,
-    ModelError
-)
-from backend.services.agents.config import (
-    BaseConfig,
-    YAMLConfig,
-    DBConfig,
-    ConfigError,
-    create_config
-)
 from backend.components.error_handler import NL2SQLError
 from backend.logger_conf import get_logger
+from backend.services.agents.base import BaseAgent, GenerationResult, ValidationResult
+from backend.services.agents.config import (
+    create_config
+)
+from backend.services.agents.models import (
+    BaseModel,
+    BaseAPIModel,
+    TransformersModel
+)
 
 logger = get_logger(__name__)
 
@@ -35,7 +30,7 @@ class AgentError(NL2SQLError):
 
 class RequestQueue:
     """Queue system for managing concurrent requests."""
-    
+
     def __init__(self, max_size: int = 100):
         """Initialize request queue.
         
@@ -45,13 +40,13 @@ class RequestQueue:
         self.queue = asyncio.Queue(maxsize=max_size)
         self.processing = {}
         self.results = {}
-        
+
     async def add_request(
-        self,
-        request_id: str,
-        text: str,
-        schema: Dict[str, Any],
-        priority: int = 0
+            self,
+            request_id: str,
+            text: str,
+            schema: Dict[str, Any],
+            priority: int = 0
     ):
         """Add request to queue.
         
@@ -63,7 +58,7 @@ class RequestQueue:
         """
         await self.queue.put((priority, request_id, text, schema))
         self.processing[request_id] = datetime.now()
-        
+
     def get_result(self, request_id: str) -> Optional[GenerationResult]:
         """Get result for request if available.
         
@@ -80,10 +75,10 @@ class NL2SQLAgent(BaseAgent):
     """Main agent implementation for NL2SQL conversion."""
 
     def __init__(
-        self,
-        config_type: str = "yaml",
-        config_path: Optional[str] = None,
-        db_config: Optional[Dict[str, Any]] = None
+            self,
+            config_type: str = "yaml",
+            config_path: Optional[str] = None,
+            db_config: Optional[Dict[str, Any]] = None
     ):
         """Initialize NL2SQL agent.
         
@@ -97,16 +92,16 @@ class NL2SQLAgent(BaseAgent):
         self.config_manager = create_config(config_type, **config_args)
         config = self.config_manager.load()
         super().__init__(config)
-        
+
         # Initialize components
         self.model = self._create_model()
         self.request_queue = RequestQueue(
             max_size=self.config.get("queue_size", 100)
         )
-        
+
         # Start background task
         self.processing_task = asyncio.create_task(self._process_queue())
-        
+
     def _create_model(self) -> BaseModel:
         """Create model instance based on configuration.
         
@@ -115,19 +110,19 @@ class NL2SQLAgent(BaseAgent):
         """
         model_config = self.config.get("model", {})
         model_type = model_config.get("type", "openai")
-        
+
         if model_type == "openai":
-            return OpenAIModel(model_config)
+            return BaseAPIModel(model_config)
         elif model_type == "transformers":
             return TransformersModel(model_config)
         else:
             raise AgentError(f"Unknown model type: {model_type}")
 
     async def generate(
-        self,
-        text: str,
-        schema: Dict[str, Any],
-        **kwargs
+            self,
+            text: str,
+            schema: Dict[str, Any],
+            **kwargs
     ) -> GenerationResult:
         """Generate SQL from natural language asynchronously.
         
@@ -143,21 +138,21 @@ class NL2SQLAgent(BaseAgent):
             # Add request to queue
             request_id = f"{datetime.now().timestamp()}"
             await self.request_queue.add_request(request_id, text, schema)
-            
+
             # Wait for result
             while True:
                 if result := self.request_queue.get_result(request_id):
                     return result
                 await asyncio.sleep(0.1)
-                
+
         except Exception as e:
             raise AgentError(f"Generation failed: {str(e)}")
 
     def validate(
-        self,
-        query: str,
-        schema: Dict[str, Any],
-        **kwargs
+            self,
+            query: str,
+            schema: Dict[str, Any],
+            **kwargs
     ) -> ValidationResult:
         """Validate generated SQL query.
         
@@ -173,33 +168,33 @@ class NL2SQLAgent(BaseAgent):
             # Basic validation - check query structure and schema references
             errors = []
             warnings = []
-            
+
             # Check query syntax using sqlparse
             import sqlparse
             parsed = sqlparse.parse(query)
             if not parsed or not parsed[0].tokens:
                 errors.append("Invalid SQL syntax")
-            
+
             # Check schema references
             tables = {t.lower() for t in schema.get("tables", {})}
             columns = {c.lower() for c in schema.get("columns", {})}
-            
+
             # Extract table/column references and validate
             refs = self._extract_references(query)
             for table in refs["tables"]:
                 if table.lower() not in tables:
                     errors.append(f"Unknown table: {table}")
-                    
+
             for column in refs["columns"]:
                 if column.lower() not in columns:
                     warnings.append(f"Potential unknown column: {column}")
-                    
+
             return ValidationResult(
                 is_valid=len(errors) == 0,
                 errors=errors,
                 warnings=warnings
             )
-            
+
         except Exception as e:
             raise AgentError(f"Validation failed: {str(e)}")
 
@@ -215,10 +210,10 @@ class NL2SQLAgent(BaseAgent):
         # Basic extraction - could be improved with proper SQL parsing
         tables = []
         columns = []
-        
+
         # Split into words and check for references
         words = query.replace("(", " ").replace(")", " ").split()
-        
+
         for i, word in enumerate(words):
             if word.lower() == "from" and i < len(words) - 1:
                 tables.append(words[i + 1].strip(","))
@@ -228,37 +223,37 @@ class NL2SQLAgent(BaseAgent):
                 while j < len(words) and words[j].lower() not in ("from", "where"):
                     columns.extend(c.strip(",") for c in words[j].split("."))
                     j += 1
-                    
+
         return {
             "tables": list(set(tables)),
             "columns": list(set(columns))
         }
-                
+
     async def _process_queue(self):
         """Background task to process request queue."""
         while True:
             try:
                 # Get next request
                 priority, request_id, text, schema = await self.request_queue.queue.get()
-                
+
                 # Generate query
                 prompt = self._create_prompt(text, schema)
                 query = await self.model.generate(prompt)
-                
+
                 # Store result
                 self.request_queue.results[request_id] = GenerationResult(
                     query=query,
                     confidence=0.8  # TODO: Implement proper confidence scoring
                 )
-                
+
                 # Cleanup
                 del self.request_queue.processing[request_id]
                 self.request_queue.queue.task_done()
-                
+
             except Exception as e:
                 logger.error(f"Queue processing error: {str(e)}")
                 await asyncio.sleep(1)
-                
+
     def _create_prompt(self, text: str, schema: Dict[str, Any]) -> str:
         """Create model prompt from input and schema.
         
@@ -273,7 +268,7 @@ class NL2SQLAgent(BaseAgent):
             f"Table {table}: {', '.join(cols)}"
             for table, cols in schema.get("tables", {}).items()
         )
-        
+
         return f"""Given the following database schema:
 
 {schema_str}
@@ -291,11 +286,11 @@ SQL query:"""
                 await self.processing_task
             except asyncio.CancelledError:
                 pass
-        
+
     async def __aenter__(self):
         """Async context manager entry."""
         return self
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit."""
         await self.close()

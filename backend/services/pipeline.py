@@ -4,17 +4,12 @@ This module implements the main processing pipeline that coordinates component
 interactions and handles the end-to-end flow of the NL2SQL system.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
-from backend.components.processors import (
-    InputProcessor,
-    SchemaManager,
-    QueryValidator,
-    QueryExecutor
-)
 from backend.components.error_handler import (
     ErrorHandler,
+    ErrorRecord,
     NL2SQLError,
     InputProcessingError,
     SchemaError,
@@ -22,9 +17,15 @@ from backend.components.error_handler import (
     ValidationError,
     ExecutionError
 )
-from backend.services.agents.agent import NL2SQLAgent
-from backend.config import DATABASE, MODEL_CONFIG
+from backend.components.processors import (
+    InputProcessor,
+    SchemaManager,
+    QueryValidator,
+    QueryExecutor
+)
+from backend.config import DATABASE
 from backend.logger_conf import get_logger
+from backend.services.agents.agent import NL2SQLAgent
 
 logger = get_logger(__name__)
 
@@ -32,7 +33,7 @@ logger = get_logger(__name__)
 @dataclass
 class PipelineResult:
     """Container for pipeline execution results."""
-    
+
     success: bool
     query: Optional[str] = None
     results: Optional[List[Tuple]] = None
@@ -43,17 +44,15 @@ class PipelineResult:
 
 class Pipeline:
     """Main processing pipeline for NL2SQL system."""
-    
+
     def __init__(
-        self,
-        db_config: Optional[Dict[str, Any]] = None,
-        model_config: Optional[Dict[str, Any]] = None
+            self,
+            db_config: Optional[Dict[str, Any]] = None,
     ):
         """Initialize pipeline and components.
         
         Args:
             db_config: Optional database configuration override
-            model_config: Optional model configuration override
         """
         # Initialize components
         self.input_processor = InputProcessor()
@@ -62,7 +61,7 @@ class Pipeline:
         self.query_validator = QueryValidator()
         self.query_executor = QueryExecutor(db_config or DATABASE)
         self.error_handler = ErrorHandler()
-        
+
         # Setup logging
         self.logger = get_logger(__name__)
 
@@ -130,7 +129,7 @@ class Pipeline:
         """
         if not self.query_validator.validate_syntax(query):
             raise ValidationError("Invalid SQL syntax")
-        
+
         is_safe, message = self.query_validator.validate_safety(query)
         if not is_safe:
             raise ValidationError(f"Query safety check failed: {message}")
@@ -153,10 +152,10 @@ class Pipeline:
             raise ExecutionError(f"Query execution failed: {str(e)}")
 
     async def process(
-        self, 
-        input_text: str,
-        table_name: str,
-        context: Optional[Dict[str, Any]] = None
+            self,
+            input_text: str,
+            table_name: str,
+            context: Optional[Dict[str, Any]] = None
     ) -> PipelineResult:
         """Execute complete NL2SQL pipeline.
         
@@ -171,19 +170,19 @@ class Pipeline:
         try:
             # Step 1: Process input
             processed_input = self._process_input(input_text)
-            
+
             # Step 2: Get schema
             schema = self._get_schema(table_name)
-            
+
             # Step 3: Generate query
             query = await self._generate_query(processed_input, schema)
-            
+
             # Step 4: Validate query
             self._validate_query(query)
-            
+
             # Step 5: Execute query
             results, columns = self._execute_query(query)
-            
+
             return PipelineResult(
                 success=True,
                 query=query,
@@ -195,17 +194,17 @@ class Pipeline:
                     "context": context
                 }
             )
-            
+
         except NL2SQLError as e:
             self.error_handler.log_error(e, context)
             return PipelineResult(success=False, error=e)
-            
+
         except Exception as e:
             error = NL2SQLError(f"Unexpected error: {str(e)}")
             self.error_handler.log_error(error, context)
             return PipelineResult(success=False, error=error)
 
-    def get_error_history(self) -> List[Dict[str, Any]]:
+    def get_error_history(self) -> List[ErrorRecord]:
         """Retrieve error history.
         
         Returns:

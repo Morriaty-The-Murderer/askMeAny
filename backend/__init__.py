@@ -12,9 +12,7 @@ All rights reserved.
 """
 
 from backend.services.pipeline import Pipeline
-from backend.services.agents import Agent, AgentConfig, AgentQueue
 from backend.components.error_handler import NL2SQLError
-from backend.components.processors import DataProcessor
 from backend.api import __version__ as api_version
 from backend.logger_conf import logger, get_logger
 
@@ -22,7 +20,7 @@ __version__ = '0.1.0'
 __author__ = 'The Author'
 __all__ = [
     'Agent',
-    'AgentConfig', 
+    'AgentConfig',
     'AgentQueue',
     'DataProcessor',
     'NL2SQLError',
