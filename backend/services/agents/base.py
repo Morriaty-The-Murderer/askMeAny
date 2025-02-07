@@ -5,22 +5,23 @@ agents must implement.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
 
 @dataclass
 class GenerationResult:
     """Container for query generation results."""
-    
+
     query: str
     confidence: float
     metadata: Optional[Dict[str, Any]] = None
 
 
-@dataclass 
+@dataclass
 class ValidationResult:
     """Container for query validation results."""
-    
+
     is_valid: bool
     errors: Optional[List[str]] = None
     warnings: Optional[List[str]] = None
@@ -33,7 +34,7 @@ class BaseAgent(ABC):
     All NL2SQL agent implementations must inherit from this class and implement
     the required abstract methods.
     """
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize base agent.
         
@@ -41,13 +42,13 @@ class BaseAgent(ABC):
             config: Optional configuration dictionary for agent settings
         """
         self.config = config or {}
-    
+
     @abstractmethod
     async def generate(
-        self,
-        text: str,
-        schema: Dict[str, Any],
-        **kwargs
+            self,
+            text: str,
+            schema: Dict[str, Any],
+            **kwargs
     ) -> GenerationResult:
         """Generate SQL query from natural language input.
         
@@ -63,13 +64,13 @@ class BaseAgent(ABC):
             NotImplementedError: Must be implemented by subclasses
         """
         raise NotImplementedError
-        
+
     @abstractmethod
     def validate(
-        self,
-        query: str,
-        schema: Dict[str, Any],
-        **kwargs
+            self,
+            query: str,
+            schema: Dict[str, Any],
+            **kwargs
     ) -> ValidationResult:
         """Validate generated SQL query.
         
@@ -85,7 +86,7 @@ class BaseAgent(ABC):
             NotImplementedError: Must be implemented by subclasses
         """
         raise NotImplementedError
-    
+
     @property
     def name(self) -> str:
         """Get agent name.
@@ -94,7 +95,7 @@ class BaseAgent(ABC):
             String identifier for the agent
         """
         return self.__class__.__name__
-    
+
     def __repr__(self) -> str:
         """Get string representation.
         

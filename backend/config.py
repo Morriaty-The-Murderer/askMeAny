@@ -8,6 +8,7 @@ environment variables where appropriate.
 
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -123,9 +124,12 @@ ERROR_MESSAGES = {
     "invalid_input": "Invalid input format: {error}",
 }
 
+
 def get_db_uri():
     """Construct database URI from configuration."""
-    return f"postgresql://{DATABASE['user']}:{DATABASE['password']}@{DATABASE['host']}:{DATABASE['port']}/{DATABASE['database']}"
+    return (f"postgresql://{DATABASE['user']}:{DATABASE['password']}@"
+            f"{DATABASE['host']}:{DATABASE['port']}/{DATABASE['database']}")
+
 
 def validate_config():
     """Validate critical configuration settings."""
@@ -133,10 +137,11 @@ def validate_config():
         ("OPENAI_API_KEY", API_KEYS["openai"]),
         ("DB_PASSWORD", DATABASE["password"]),
     ]
-    
+
     missing_vars = [var for var, value in required_vars if not value]
     if missing_vars:
         raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+
 
 def init_config():
     """Initialize and validate configuration."""

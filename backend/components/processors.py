@@ -4,9 +4,11 @@ This module contains the core processing classes for input handling, schema mana
 query generation, validation and execution in the NL2SQL system.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
+
 import psycopg2
 import sqlparse
+
 from backend.config import DATABASE, MODEL_CONFIG, ERROR_MESSAGES
 from backend.logger_conf import get_logger
 
@@ -15,7 +17,7 @@ logger = get_logger(__name__)
 
 class InputProcessor:
     """Handles preprocessing and normalization of natural language input."""
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize the input processor.
         
@@ -168,11 +170,11 @@ class QueryValidator:
         """
         dangerous_keywords = ["DROP", "DELETE", "TRUNCATE", "ALTER"]
         query_upper = query.upper()
-        
+
         for keyword in dangerous_keywords:
             if keyword in query_upper:
                 return False, f"Query contains dangerous keyword: {keyword}"
-        
+
         return True, "Query passed safety validation"
 
 

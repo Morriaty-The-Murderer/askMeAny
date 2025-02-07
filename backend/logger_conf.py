@@ -1,6 +1,5 @@
 import os
 import sys
-from datetime import datetime
 from pathlib import Path
 
 from loguru import logger
@@ -16,7 +15,8 @@ LOG_DIR = PROJECT_ROOT / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 
 # Configure logging format
-LOG_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+LOG_FORMAT = ("<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | "
+              "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>")
 
 # Configure default logger
 logger.add(
@@ -62,6 +62,7 @@ if os.getenv("ENVIRONMENT") == "development":
         enqueue=True,
     )
 
+
 def get_logger(name: str = None):
     """Get a logger instance with the specified name.
     
@@ -72,6 +73,7 @@ def get_logger(name: str = None):
         Logger instance configured with project settings
     """
     return logger.bind(name=name or "main")
+
 
 # Export configured logger
 __all__ = ["logger", "get_logger"]

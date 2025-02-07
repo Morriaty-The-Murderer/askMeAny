@@ -5,16 +5,18 @@ custom exceptions, error tracking, and logging integration.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
-from datetime import datetime
 from dataclasses import dataclass
-from src.config import ERROR_MESSAGES
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from backend.config import ERROR_MESSAGES
 
 logger = logging.getLogger(__name__)
 
+
 class NL2SQLError(Exception):
     """Base exception class for NL2SQL system errors."""
-    
+
     def __init__(self, message: str, error_code: Optional[str] = None):
         """Initialize base error.
         
@@ -27,30 +29,36 @@ class NL2SQLError(Exception):
         self.timestamp = datetime.now()
         super().__init__(self.message)
 
+
 class InputProcessingError(NL2SQLError):
     """Exception raised for errors in input processing."""
     pass
+
 
 class SchemaError(NL2SQLError):
     """Exception raised for database schema related errors."""
     pass
 
+
 class QueryGenerationError(NL2SQLError):
     """Exception raised for errors during SQL query generation."""
     pass
+
 
 class ValidationError(NL2SQLError):
     """Exception raised for query validation errors."""
     pass
 
+
 class ExecutionError(NL2SQLError):
     """Exception raised for query execution errors."""
     pass
 
+
 @dataclass
 class ErrorRecord:
     """Data class for storing error information."""
-    
+
     timestamp: datetime
     error_type: str
     message: str
@@ -58,9 +66,10 @@ class ErrorRecord:
     stack_trace: Optional[str] = None
     context: Optional[Dict[str, Any]] = None
 
+
 class ErrorHandler:
     """Manages error handling and tracking for NL2SQL system."""
-    
+
     def __init__(self):
         """Initialize error handler."""
         self.errors: List[ErrorRecord] = []
@@ -98,7 +107,8 @@ class ErrorHandler:
         """Clear error history."""
         self.errors = []
 
-    def format_error_message(self, template_key: str, **kwargs) -> str:
+    @staticmethod
+    def format_error_message(template_key: str, **kwargs) -> str:
         """Format error message using template.
         
         Args:
