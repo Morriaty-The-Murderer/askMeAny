@@ -5,12 +5,12 @@ query generation, validation and execution in the NL2SQL system.
 """
 
 from typing import Any, Dict, List, Optional, Tuple, Union
-import logging
 import psycopg2
 import sqlparse
-from src.config import DATABASE, MODEL_CONFIG, ERROR_MESSAGES
+from backend.config import DATABASE, MODEL_CONFIG, ERROR_MESSAGES
+from backend.logger_conf import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class InputProcessor:
@@ -23,7 +23,7 @@ class InputProcessor:
             config: Optional configuration dictionary for processor settings
         """
         self.config = config or {}
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
 
     def normalize_text(self, text: str) -> str:
         """Normalize input text by removing extra whitespace and standardizing case.
@@ -66,7 +66,7 @@ class SchemaManager:
         self.db_config = db_config or DATABASE
         self.connection = None
         self._schema_cache = {}
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
 
     def connect(self) -> None:
         """Establish database connection."""
@@ -117,7 +117,7 @@ class QueryGenerator:
             model_config: Optional model configuration override
         """
         self.model_config = model_config or MODEL_CONFIG
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
 
     def generate(self, processed_input: Dict[str, Any], schema: Dict[str, Any]) -> str:
         """Generate SQL query from processed input and schema.
@@ -139,7 +139,7 @@ class QueryValidator:
 
     def __init__(self):
         """Initialize query validator."""
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
 
     def validate_syntax(self, query: str) -> bool:
         """Check if query has valid SQL syntax.
@@ -187,7 +187,7 @@ class QueryExecutor:
         """
         self.db_config = db_config or DATABASE
         self.connection = None
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
 
     def connect(self) -> None:
         """Establish database connection."""

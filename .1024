@@ -1,2 +1,2 @@
 compile_command: ""
-run_command: python src/main.py
+run_command: python backend/main.py

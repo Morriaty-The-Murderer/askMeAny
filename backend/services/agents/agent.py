@@ -5,27 +5,27 @@ connection pooling, request queueing and async processing capabilities.
 """
 
 import asyncio
-import logging
 from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 
-from src.agents.base import BaseAgent, GenerationResult, ValidationResult
-from src.agents.models import (
+from backend.services.agents.base import BaseAgent, GenerationResult, ValidationResult
+from backend.services.agents.models import (
     BaseModel,
     OpenAIModel,
     TransformersModel,
     ModelError
 )
-from src.agents.config import (
+from backend.services.agents.config import (
     BaseConfig,
     YAMLConfig,
     DBConfig,
     ConfigError,
     create_config
 )
-from src.components.error_handler import NL2SQLError
+from backend.components.error_handler import NL2SQLError
+from backend.logger_conf import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class AgentError(NL2SQLError):
