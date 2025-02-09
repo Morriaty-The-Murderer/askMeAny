@@ -20,9 +20,22 @@ DATA_DIR = BASE_DIR / "data"
 MODELS_DIR = BASE_DIR / "models"
 CACHE_DIR = BASE_DIR / "cache"
 
-# Ensure required directories exist
+# Ensure base directory exists first
+if not BASE_DIR.exists():
+    try:
+        BASE_DIR.mkdir(parents=True, mode=0o755)
+    except PermissionError as e:
+        raise PermissionError(f"Failed to create base directory {BASE_DIR}: {e}")
+
+# Create and verify required subdirectories with proper permissions
 for directory in [DATA_DIR, MODELS_DIR, CACHE_DIR]:
-    directory.mkdir(exist_ok=True)
+    try:
+        if not directory.exists():
+            directory.mkdir(mode=0o755)
+        elif not os.access(directory, os.W_OK):
+            raise PermissionError(f"Directory {directory} exists but is not writable")
+    except Exception as e:
+        raise RuntimeError(f"Failed to setup directory {directory}: {e}")
 
 # Database configurations
 DATABASE = {
@@ -132,7 +145,8 @@ def get_db_uri():
 
 
 def validate_config():
-    """Validate critical configuration settings."""
+    """Validate critical configuration settings and directory structure."""
+    # Check environment variables
     required_vars = [
         ("OPENAI_API_KEY", API_KEYS["openai"]),
         ("DB_PASSWORD", DATABASE["password"]),
@@ -141,6 +155,13 @@ def validate_config():
     missing_vars = [var for var, value in required_vars if not value]
     if missing_vars:
         raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    
+    # Verify directory permissions and structure
+    for directory in [BASE_DIR, DATA_DIR, MODELS_DIR, CACHE_DIR]:
+        if not directory.exists():
+            raise RuntimeError(f"Required directory {directory} does not exist")
+        if not os.access(directory, os.W_OK):
+            raise PermissionError(f"Directory {directory} is not writable")
 
 
 def init_config():

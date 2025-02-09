@@ -62,11 +62,12 @@ class BaseAgent(ABC):
             
         Raises:
             NotImplementedError: Must be implemented by subclasses
+            ModelError: For model/generation related errors
         """
         raise NotImplementedError
 
     @abstractmethod
-    def validate(
+    async def validate(
             self,
             query: str,
             schema: Dict[str, Any],
@@ -84,6 +85,7 @@ class BaseAgent(ABC):
             
         Raises:
             NotImplementedError: Must be implemented by subclasses
+            ValidationError: For validation specific errors
         """
         raise NotImplementedError
 
