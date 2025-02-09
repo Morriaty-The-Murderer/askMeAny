@@ -131,17 +131,18 @@ class RequestQueue:
         """
         return self.requests.get(request_id)
 
-    async def process_request(self, request: Request) -> None:
+    async def process_request(self, request: Request, model: BaseModel) -> None:
         """Process single request with timeout handling.
         
         Args:
             request: Request to process
+            model: Model instance for generation
         """
         try:
             request.status = RequestStatus.PROCESSING
 
-            # Simulate processing time
-            await asyncio.sleep(2)
+            # Generate SQL query
+            prompt = self._create_prompt(request.text, request.schema)
 
             if (datetime.now() - request.created_at).seconds > request.timeout:
                 request.status = RequestStatus.TIMEOUT
@@ -149,9 +150,9 @@ class RequestQueue:
                 self.stats["timeouts"] += 1
                 return
 
-            # Process request here
-            request.result = f"Processed {request.text}"
-            request.status = RequestStatus.COMPLETED
+            # Process using model
+            request.result = await model.generate(prompt)
+            request.status = RequestStatus.COMPLETED 
             self.stats["processed"] += 1
 
         except Exception as e:
@@ -160,12 +161,16 @@ class RequestQueue:
             self.stats["failed"] += 1
             self.logger.error(f"Error processing request {request.id}: {e}")
 
-    async def worker(self) -> None:
-        """Worker coroutine for processing queue items."""
+    async def worker(self, model: BaseModel) -> None:
+        """Worker coroutine for processing queue items.
+        
+        Args:
+            model: Model instance for generation
+        """
         while self.running:
             try:
                 priority, request = await self.queue.get()
-                await self.process_request(request)
+                await self.process_request(request, model)
                 self.queue.task_done()
             except Exception as e:
                 self.logger.error(f"Worker error: {e}")

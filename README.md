@@ -1,9 +1,11 @@
-# NL2SQL: Natural Language to SQL Query System
+=# NL2SQL: Natural Language to SQL Query System
 
 AI-powered data inspection and query generation tool that transforms natural language questions into SQL queries,
 supporting multiple LLM providers.
 
-## Overview
+## Overview (概述 / 概要)
+
+### English
 
 NL2SQL is an advanced system that enables users to interact with databases using natural language. It combines modern
 LLM capabilities with database querying to provide an intuitive interface for data analysis and exploration.
@@ -16,6 +18,38 @@ Key Features:
 - Interactive data visualization interface
 - Administrative dashboard for system monitoring
 - Automated data collection and processing pipeline
+
+---
+
+### 中文
+
+NL2SQL是一个先进的系统，允许用户使用自然语言与数据库进行交互。它将现代大语言模型（LLM）的能力与数据库查询相结合，
+为数据分析和探索提供直观的界面。
+
+主要特点：
+
+- 自然语言转SQL查询转换
+- 支持OpenAI、Claude和Gemini模型
+- 自动提供商故障转移处理
+- 交互式数据可视化界面
+- 系统监控管理仪表板
+- 自动化数据收集和处理流程
+
+---
+
+### 日本語
+
+NL2SQLは、ユーザーが自然言語を使用してデータベースと対話できる高度なシステムです。最新の大規模言語モデル（LLM）の
+機能とデータベース検索を組み合わせ、データ分析と探索のための直感的なインターフェースを提供します。
+
+主な機能：
+
+- 自然言語からSQLクエリへの変換
+- OpenAI、Claude、Geminiモデルのサポート
+- 自動プロバイダーフォールバック処理
+- インタラクティブなデータ可視化インターフェース
+- システム監視管理ダッシュボード
+- 自動データ収集・処理パイプライン
 
 ## Project Structure
 
